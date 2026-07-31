@@ -303,7 +303,7 @@
                             <input type="text" id="costLens" value="" oninput="maskAndCalculate(this)">
                         </div>
                         <div class="form-group">
-                            <label for="costAssembly">Custo Extra (R$)</label>
+                            <label for="costAssembly">Montagem (R$)</label>
                             <input type="text" id="costAssembly" value="" oninput="maskAndCalculate(this)">
                         </div>
                         <div class="form-group">
@@ -691,6 +691,34 @@
         if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
   }
+        self.addEventListener('install', (event) => {
+  // Força o Service Worker novo a virar ativo imediatamente
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll([
+        '/',
+        '/index.html',
+        // seus outros arquivos aqui
+      ]);
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  // Deleta os caches antigos (v1, etc) e assume o controle da página
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
     </script>
 </body>
 </html>
