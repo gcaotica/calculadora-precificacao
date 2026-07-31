@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Precificação & Margens</title>
+    <style>
+        /* ==========================================================================
+           1. VARIÁVEIS DE TEMA E ESTILOS BASE (Design System)
+           ========================================================================== */
+        :root[data-theme="light"] {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            --input-bg: #ffffff;
+        }
+
+        :root[data-theme="dark"] {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --success: #10b981;
+            --danger: #f87171;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            --input-bg: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 1.5rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .theme-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+        }
+
+        /* Grid Layout */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 850px) {
+            .grid-layout {
+                grid-template-columns: 1.2fr 0.8fr;
+            }
+        }
+
+        /* Cartões / Containers */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Formulários */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            color: var(--text-muted);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.625rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            background-color: var(--input-bg);
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        /* Estilo para campos inválidos */
+        input.invalid {
+            border-color: var(--danger);
+        }
+
+        input.invalid + .error-msg {
+            display: block;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .row, .row-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Display de Resultados */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .metric-box {
+            background-color: var(--bg-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .metric-box.full {
+            grid-column: span 2;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        .metric-value.large {
+            font-size: 1.75rem;
+        }
+
+        .highlight-success {
+            color: var(--success);
+        }
+
+        .highlight-primary {
+            color: var(--primary);
+        }
+
+        /* Botão Ação */
+        .btn-primary {
+            width: 100%;
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Tabela de Histórico */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .actions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-clear {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- HEADER COM CONTROLE DE TEMA -->
+        <header>
+            <h1>Calculadora de Precificação</h1>
+            <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">Modo Escuro</button>
+        </header>
+
+        <div class="grid-layout">
+            <!-- COLUNA DE ENTRADAS -->
+            <div class="column">
+                <!-- CARD 1: CUSTOS DIRETOS -->
+                <div class="card">
+                    <div class="card-title">1. Custos Diretos</div>
+                    
+                    <div class="form-group">
+                        <label for="productName">Descrição do Produto / Serviço</label>
+                        <input type="text" id="productName" value="" placeholder="" oninput="calculate()">
+                    </div>
+
+                    <div class="row-3">
+                        <div class="form-group">
+                            <label for="costLens">Custo do Produto (R$)</label>
+                            <input type="text" id="costLens" value="" oninput="maskAndCalculate(this)">
+                        </div>
+                        <div class="form-group">
+                            <label for="costAssembly">Custo Extra (R$)</label>
+                            <input type="text" id="costAssembly" value="" oninput="maskAndCalculate(this)">
+                        </div>
+                        <div class="form-group">
+                            <label for="costFreight">Frete (R$)</label>
+                            <input type="text" id="costFreight" value="" oninput="maskAndCalculate(this)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2: TAXAS E MARGEM -->
+                <div class="card">
+                    <div class="card-title">2. Taxas Fixas e Margem Desejada</div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="rateFixed">Despesa Fixa (%)</label>
+                            <input type="text" id="rateFixed" value="" oninput="maskAndCalculate(this)">
+                        </div>
+                        <div class="form-group">
+                            <label for="targetMargin">Lucro Livre (%)</label>
+                            <input type="text" id="targetMargin" value="" oninput="maskAndCalculate(this)">
+                        </div>
+                    </div>
+                    <span class="error-msg" id="rateError">A soma das taxas não pode ser maior ou igual a 100%.</span>
+                </div>
+
+                <!-- CARD 3: SIMULAÇÕES COMERCIAIS E PARCELAMENTO -->
+                <div class="card">
+                    <div class="card-title">3. Condições de Pagamento</div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label for="installments">Forma / Parcelas</label>
+                            <select id="installments" onchange="updateCardRateByInstallment()">
+                                <option></option>
+                                <option value="debito">Débito (3,0% taxa)</option>
+                                <option value="1">1x (5,5% taxa)</option>
+                                <option value="2">2x (10,9% taxa)</option>
+                                <option value="3">3x (12,0% taxa)</option>
+                                <option value="4">4x (12,6% taxa)</option>
+                                <option value="5">5x (13,3% taxa)</option>
+                                <option value="6">6x (14,0% taxa)</option>
+                                <option value="7">7x (15,0% taxa)</option>
+                                <option value="8">8x (15,6% taxa)</option>
+                                <option value="9">9x (16,2% taxa)</option>
+                                <option value="10">10x (16,9% taxa)</option>
+                                <option value="11">11x (17,9% taxa)</option>
+                                <option value="12">12x (18,3% taxa)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="rateCard">Taxa Maquininha Aplicada (%)</label>
+                            <input type="text" id="rateCard" value="12,00" readonly style="background-color: var(--bg-color); cursor: not-allowed;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="discountPercent">Desconto Adicional (%)</label>
+                        <input type="text" id="discountPercent" value="0,00" oninput="maskAndCalculate(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLUNA DE RESULTADOS -->
+            <div class="column">
+                <div class="card">
+                    <div class="card-title">Resumo Financeiro</div>
+                    
+                    <div class="metric-grid">
+                        <div class="metric-box full">
+                            <div class="metric-label">Preço Final Cobrado</div>
+                            <div class="metric-value large highlight-primary" id="resSuggestedPrice">R$ 0,00</div>
+                        </div>
+
+                        <div class="metric-box">
+                            <div class="metric-label">Valor por Parcela</div>
+                            <div class="metric-value" id="resInstallmentValue">R$ 0,00</div>
+                        </div>
+
+                        <div class="metric-box">
+                            <div class="metric-label">Preço com Desconto</div>
+                            <div class="metric-value" id="resFinalPrice">R$ 0,00</div>
+                        </div>
+
+                        <div class="metric-box">
+                            <div class="metric-label">Lucro Líquido (R$)</div>
+                            <div class="metric-value highlight-success" id="resProfitReal">R$ 0,00</div>
+                        </div>
+
+                        <div class="metric-box">
+                            <div class="metric-label">Margem Real (%)</div>
+                            <div class="metric-value highlight-success" id="resRealMargin">0,00%</div>
+                        </div>
+
+                        <div class="metric-box">
+                            <div class="metric-label">Markup Multiplicador</div>
+                            <div class="metric-value" id="resMarkup">0.00x</div>
+                        </div>
+
+                        <div class="metric-box">
+                            <div class="metric-label">Custo Direto Total</div>
+                            <div class="metric-value" id="resTotalCost">R$ 0,00</div>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" onclick="saveToHistory()">Salvar no Histórico</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEÇÃO DE HISTÓRICO -->
+        <div class="card">
+            <div class="card-title actions-header">
+                <span>Histórico de Simulações</span>
+                <button class="btn-clear" onclick="clearHistory()">Limpar Histórico</button>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Custo Direto</th>
+                            <th>Preço Venda</th>
+                            <th>Forma / Parcela</th>
+                            <th>Taxa Maq.</th>
+                            <th>Lucro (R$)</th>
+                            <th>Margem Real</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Linhas injetadas via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+       2. LÓGICA JAVASCRIPT
+       ========================================================================== -->
+    <script>
+
+        document.addEventListener("DOMContentLoaded", () => {
+    initTheme();
+    loadHistory();
+    updateCardRateByInstallment(); // Executa o cálculo logo ao abrir a página
+    });
+
+        /* Tabela de Taxas do Cartão (Débito e Crédito) */
+        const cardRates = {
+            "debito": 3.0,
+            1: 5.5,
+            2: 10.9,
+            3: 12.0,
+            4: 12.6,
+            5: 13.3,
+            6: 14.0,
+            7: 15.0,
+            8: 15.6,
+            9: 16.2,
+            10: 16.9,
+            11: 17.9,
+            12: 18.3
+        };
+
+        /* --- ESTADO E INICIALIZAÇÃO --- */
+        document.addEventListener("DOMContentLoaded", () => {
+            initTheme();
+            loadHistory();
+            updateCardRateByInstallment();
+        });
+
+        /* --- GERENCIAMENTO DE TEMA (CLARO/ESCURO) --- */
+        function initTheme() {
+            const savedTheme = localStorage.getItem("app_theme") || "light";
+            document.documentElement.setAttribute("data-theme", savedTheme);
+            updateThemeButtonText(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute("data-theme");
+            const newTheme = currentTheme === "light" ? "dark" : "light";
+            document.documentElement.setAttribute("data-theme", newTheme);
+            localStorage.setItem("app_theme", newTheme);
+            updateThemeButtonText(newTheme);
+        }
+
+        function updateThemeButtonText(theme) {
+            const btn = document.getElementById("themeToggleBtn");
+            btn.innerText = theme === "light" ? "Modo Escuro" : "Modo Claro";
+        }
+
+        /* --- ATUALIZA TAXA DA MAQUININHA AUTOMATICAMENTE --- */
+        function updateCardRateByInstallment() {
+            const selectedVal = document.getElementById("installments").value;
+            const rate = cardRates[selectedVal] !== undefined ? cardRates[selectedVal] : 0;
+            
+            document.getElementById("rateCard").value = rate.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            calculate();
+        }
+
+        /* --- MÁSCARAS E FORMATAÇÃO DE ENTRADA --- */
+        function parseCurrency(value) {
+            if (!value) return 0;
+            const cleanValue = value.replace(/\D/g, "");
+            return parseFloat(cleanValue) / 100 || 0;
+        }
+
+        function formatCurrencyInput(value) {
+            const number = parseCurrency(value);
+            return number.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function maskAndCalculate(input) {
+            input.value = formatCurrencyInput(input.value);
+            calculate();
+        }
+
+        function formatBRL(value) {
+            return value.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+            });
+        }
+
+        /* --- MOTOR DE CÁLCULO REATIVO --- */
+        function calculate() {
+            // Custos Diretos em R$
+            const costLens = parseCurrency(document.getElementById("costLens").value);
+            const costAssembly = parseCurrency(document.getElementById("costAssembly").value);
+            const costFreight = parseCurrency(document.getElementById("costFreight").value);
+            const totalCost = costLens + costAssembly + costFreight;
+
+            // Taxas Percentuais
+            const rateCard = parseCurrency(document.getElementById("rateCard").value);
+            const rateFixed = parseCurrency(document.getElementById("rateFixed").value);
+            const targetMargin = parseCurrency(document.getElementById("targetMargin").value);
+
+            // Simulações
+            const discountPct = parseCurrency(document.getElementById("discountPercent").value);
+            const installmentKey = document.getElementById("installments").value;
+            const isDebito = installmentKey === "debito";
+            const numInstallments = isDebito ? 1 : (parseInt(installmentKey, 10) || 1);
+
+            const sumRatesPct = rateCard + rateFixed + targetMargin;
+            const rateErrorEl = document.getElementById("rateError");
+
+            if (sumRatesPct >= 100) {
+                rateErrorEl.style.display = "block";
+                document.getElementById("resSuggestedPrice").innerText = "Erro (Taxas >= 100%)";
+                return;
+            } else {
+                rateErrorEl.style.display = "none";
+            }
+
+            // FÓRMULA DO MARKUP DIVISOR: Preço = Custo / (1 - (Soma das Taxas / 100))
+            let suggestedPrice = 0;
+            if (sumRatesPct < 100) {
+                suggestedPrice = totalCost / (1 - (sumRatesPct / 100));
+            }
+
+            if (!isFinite(suggestedPrice) || suggestedPrice < 0) suggestedPrice = 0;
+
+            // Preço final com desconto simulado
+            const finalPrice = suggestedPrice - (suggestedPrice * (discountPct / 100));
+
+            // Deduções e Lucro Real baseado no preço de venda praticado
+            const cardVal = finalPrice * (rateCard / 100);
+            const fixedVal = finalPrice * (rateFixed / 100);
+            const profitReal = finalPrice - totalCost - cardVal - fixedVal;
+            const realMarginPct = finalPrice > 0 ? (profitReal / finalPrice) * 100 : 0;
+
+            // Markup Multiplicador (Preço de Venda / Custo Direto)
+            const markup = totalCost > 0 ? (suggestedPrice / totalCost) : 0;
+
+            // Valor por parcela
+            const installmentValue = suggestedPrice / numInstallments;
+
+            // Renderização no Resumo
+            document.getElementById("resSuggestedPrice").innerText = formatBRL(suggestedPrice);
+            document.getElementById("resFinalPrice").innerText = formatBRL(finalPrice);
+            document.getElementById("resTotalCost").innerText = formatBRL(totalCost);
+            document.getElementById("resMarkup").innerText = markup.toFixed(2) + "x";
+            document.getElementById("resProfitReal").innerText = formatBRL(profitReal);
+            document.getElementById("resRealMargin").innerText = realMarginPct.toFixed(2) + "%";
+
+            if (isDebito) {
+                document.getElementById("resInstallmentValue").innerText = `À Vista (Débito)`;
+            } else {
+                document.getElementById("resInstallmentValue").innerText = `${numInstallments}x de ${formatBRL(installmentValue)}`;
+            }
+        }
+
+        /* --- GERENCIAMENTO DE HISTÓRICO (LOCALSTORAGE) --- */
+        function saveToHistory() {
+            const productName = document.getElementById("productName").value.trim() || "Item sem nome";
+            const costLens = parseCurrency(document.getElementById("costLens").value);
+            const costAssembly = parseCurrency(document.getElementById("costAssembly").value);
+            const costFreight = parseCurrency(document.getElementById("costFreight").value);
+            const totalCost = costLens + costAssembly + costFreight;
+            
+            const rawInstallments = document.getElementById("installments").value;
+            const installmentText = rawInstallments === "debito" ? "Débito" : `${rawInstallments}x`;
+            const rateCard = document.getElementById("rateCard").value;
+
+            if (totalCost <= 0) {
+                alert("Insira os custos antes de salvar.");
+                return;
+            }
+
+            const historyItem = {
+                id: Date.now(),
+                name: productName,
+                cost: formatBRL(totalCost),
+                finalPrice: document.getElementById("resSuggestedPrice").innerText,
+                installments: installmentText,
+                rateCard: `${rateCard}%`,
+                profit: document.getElementById("resProfitReal").innerText,
+                margin: document.getElementById("resRealMargin").innerText
+            };
+
+            const history = getStoredHistory();
+            history.unshift(historyItem);
+            localStorage.setItem("calc_history", JSON.stringify(history));
+
+            renderHistory();
+        }
+
+        function getStoredHistory() {
+            const data = localStorage.getItem("calc_history");
+            return data ? JSON.parse(data) : [];
+        }
+
+        function loadHistory() {
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const history = getStoredHistory();
+            const tbody = document.getElementById("historyTableBody");
+            tbody.innerHTML = "";
+
+            if (history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted);">Nenhuma simulação salva.</td></tr>`;
+                return;
+            }
+
+            history.forEach(item => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${escapeHtml(item.name)}</strong></td>
+                    <td>${item.cost}</td>
+                    <td>${item.finalPrice}</td>
+                    <td>${item.installments || '-'}</td>
+                    <td>${item.rateCard || '-'}</td>
+                    <td>${item.profit}</td>
+                    <td>${item.margin}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearHistory() {
+            if (confirm("Deseja realmente apagar todo o histórico de simulações?")) {
+                localStorage.removeItem("calc_history");
+                renderHistory();
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+        
+        if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+    </script>
+</body>
+</html>
