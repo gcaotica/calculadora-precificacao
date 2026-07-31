@@ -20,3 +20,12 @@ self.addEventListener('fetch', (e) => {
     })
   );
 });
+
+self.addEventListener('install', (e) => {
+  self.skipWaiting(); // <--- Adicione esta linha
+  e.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(assets);
+    })
+  );
+});
